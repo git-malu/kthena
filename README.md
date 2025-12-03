@@ -94,3 +94,5 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
 ## License
 
 Kthena is licensed under the [Apache 2.0 License](LICENSE).
+
+update main directly
