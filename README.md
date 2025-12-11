@@ -1,24 +1,35 @@
 # Kthena
 
-<p align="center">
-  <img src="docs/proposal/images/kthena-arch.svg" alt="Kthena Architecture" width="800"/>
-</p>
-
-<p align="center">
-  <strong>The Enterprise-Grade LLM Serving Platform That Makes AI Infrastructure Simple, Scalable, and Cost-Efficient</strong>
-</p>
-
-<p align="center">
-| <a href="https://kthena.volcano.sh/">Documentation</a> | <a href="https://kthena.volcano.sh/blog">Blog</a> | <a href="#">White Paper</a> | <a href="#">Slack</a> |
-
-</p>
-
 <div align="center">
-
-[![Go Check](https://github.com/volcano-sh/kthena/actions/workflows/go-check.yml/badge.svg)](https://github.com/volcano-sh/kthena/actions/workflows/go-check.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/volcano-sh/kthena)](https://goreportcard.com/report/github.com/volcano-sh/kthena)
-![GitHub Release](https://img.shields.io/github/v/release/volcano-sh/kthena?sort=semver)
-
+  <!-- Badges Section -->
+  <p>
+    <a href="https://github.com/volcano-sh/kthena/actions/workflows/go-check.yml">
+      <img src="https://github.com/volcano-sh/kthena/actions/workflows/go-check.yml/badge.svg" alt="Go Check" />
+    </a>
+    <a href="https://goreportcard.com/report/github.com/volcano-sh/kthena">
+      <img src="https://goreportcard.com/badge/github.com/volcano-sh/kthena" alt="Go Report Card" />
+    </a>
+    <img src="https://img.shields.io/github/v/release/volcano-sh/kthena?sort=semver" alt="GitHub Release" />
+  </p>
+  <!-- Pitch / Tagline -->
+  <h3>
+    Enterprise-grade LLM serving platform made simple, scalable, and cost-efficient.
+  </h3>
+  <!-- Quick Links as Badges for consistency -->
+  <p>
+    <a href="https://kthena.volcano.sh/">
+      <img src="https://img.shields.io/badge/📖_Documentation-000000?style=for-the-badge&logoColor=white" alt="Documentation">
+    </a>
+    <a href="https://kthena.volcano.sh/blog">
+      <img src="https://img.shields.io/badge/📰_Blog-000000?style=for-the-badge&logoColor=white" alt="Blog">
+    </a>
+    <a href="#">
+      <img src="https://img.shields.io/badge/slack-chat-4A154B?style=for-the-badge&logo=slack&logoColor=white" alt="Slack">
+    </a>
+  </p>
+  <br />
+  <!-- Architecture Image (Moved down for better flow) -->
+  <img src="docs/proposal/images/kthena-arch.svg" alt="Kthena Architecture" width="800"/>
 </div>
 
 ## Overview
