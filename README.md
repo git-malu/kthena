@@ -30,6 +30,9 @@
   <br />
   <!-- Architecture Image (Moved down for better flow) -->
   <img src="docs/proposal/images/kthena-arch.svg" alt="Kthena Architecture" width="800"/>
+  <img src="docs/kthena/docs/assets/diagrams/architecture/architecture_overview.svg" alt="Kthena Architecture" width="800"/>
+  <picture><img src="docs/proposal/images/kthena-arch.svg" alt="Kthena Architecture" width="800"/></picture>
+  <picture><img src="docs/kthena/docs/assets/diagrams/architecture/architecture_overview.svg" alt="Kthena Architecture" width="800"/></picture>
 </div>
 
 ## Overview
