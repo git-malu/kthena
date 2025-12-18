@@ -39,7 +39,7 @@ Content of the Model:
     {QuickStartYaml}
 </CodeBlock>
 
-**Step 2: Wait for Model to be Ready**
+**Step 2: Wait for Model to be Readyxxx**
 
 Wait model condition `Active` to become `true`. You can check the status using:
 
