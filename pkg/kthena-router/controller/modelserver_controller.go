@@ -115,7 +115,7 @@ func (c *ModelServerController) Run(stopCh <-chan struct{}) error {
 	defer utilruntime.HandleCrash()
 	defer c.workqueue.ShutDown()
 
-	if ok := cache.WaitForCacheSync(stopCh, c.modelServerRegistration.HasSynced, c.podRegistration.HasSynced); !ok {
+	if ok := cache.WaitForCacheSync(stopCh, c.modelServerSynced, c.podSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 	// add initialSync signal
@@ -209,6 +209,38 @@ func (c *ModelServerController) syncModelServerHandler(key string) error {
 	}
 
 	_ = c.store.AddOrUpdateModelServer(ms, pods)
+
+	// Get already bound pods to avoid unnecessary updates
+	existingPods, err := c.store.GetPodsByModelServer(utils.GetNamespaceName(ms))
+	if err != nil {
+		klog.V(4).Infof("failed to get existing pods for ModelServer %s/%s: %v", ms.Namespace, ms.Name, err)
+	}
+
+	// Build a set of existing pod names for quick lookup
+	existingPodNames := sets.New[types.NamespacedName]()
+	for _, podInfo := range existingPods {
+		existingPodNames.Insert(utils.GetNamespaceName(podInfo.Pod))
+	}
+
+	// Only add or update pods that are not yet bound to the store
+	// This handles the case where pods became ready before the ModelServer was synced
+	for _, pod := range podList {
+		if !isPodReady(pod) {
+			continue
+		}
+
+		podName := utils.GetNamespaceName(pod)
+		// Skip pods that are already properly bound
+		if existingPodNames.Contains(podName) {
+			continue
+		}
+
+		// Find all ModelServers that match this pod and update the store
+		if err := c.addOrUpdatePod(pod); err != nil {
+			klog.Errorf("failed to add or update pod %s/%s: %v", pod.Namespace, pod.Name, err)
+		}
+	}
+
 	return nil
 }
 
@@ -233,9 +265,15 @@ func (c *ModelServerController) syncPodHandler(key string) error {
 		return nil
 	}
 
+	return c.addOrUpdatePod(pod)
+}
+
+// addOrUpdatePod finds all ModelServers that match the given pod
+// and adds or updates the pod-server binding in the data store
+func (c *ModelServerController) addOrUpdatePod(pod *corev1.Pod) error {
 	modelServers, err := c.modelServerLister.ModelServers(pod.Namespace).List(labels.Everything())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list ModelServers for pod %s/%s: %v", pod.Namespace, pod.Name, err)
 	}
 
 	servers := []*aiv1alpha1.ModelServer{}
@@ -247,12 +285,10 @@ func (c *ModelServerController) syncPodHandler(key string) error {
 		servers = append(servers, item)
 	}
 
-	if len(servers) == 0 {
-		return nil
-	}
-
-	if err := c.store.AddOrUpdatePod(pod, servers); err != nil {
-		return fmt.Errorf("failed to add or update pod in data store: %v", name)
+	if len(servers) > 0 {
+		if err := c.store.AddOrUpdatePod(pod, servers); err != nil {
+			return fmt.Errorf("failed to add or update pod %s/%s in data store: %v", pod.Namespace, pod.Name, err)
+		}
 	}
 
 	return nil
