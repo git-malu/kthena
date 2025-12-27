@@ -1,16 +1,21 @@
 ---
 slug: launch-blog-post
 title: "Volcano Community Launches Kthena Sub-project: Redefining Intelligent LLM Inference"
-authors: [hzxuzhonghu]
+authors: [ hzxuzhonghu ]
 date: 2025-09-01
-tags: []
+tags: [ ]
 ---
+
+import LightboxImage from '@site/src/components/LightboxImage';
+import kthenaArchitecture from './images/kthena-arch.svg';
+import kthenaOrchestration from './images/model-serving.svg';
 
 # Volcano Community Launches Kthena Sub-project: Redefining Intelligent LLM Inference
 
 Today, we’re excited to announce to global developers and MLOps engineers the arrival of a new sub-project in the Volcano community **Kthena**.
 
-Kthena is a cloud-native, high-performance LLM inference routing, orchestration, and scheduling system designed specifically for Kubernetes. It aims to solve the core challenges of deploying and serving LLMs at scale in production environments. Through its unique features such as **KV Cache-aware scheduling** and **Prefill/Decode separation routing**, Kthena significantly improves GPU resource utilization, reduces inference latency, and provides enterprises with unprecedented flexibility and control.
+Kthena is a cloud-native, high-performance LLM inference routing, orchestration, and scheduling system designed specifically for Kubernetes.
+It aims to solve the core challenges of deploying and serving LLMs at scale in production environments. Through its unique features such as **KV Cache-aware scheduling** and **Prefill/Decode separation routing**, Kthena significantly improves GPU resource utilization, reduces inference latency, and provides enterprises with unprecedented flexibility and control.
 
 As a sub-project of Volcano, Kthena is dedicated to helping Volcano expand its boundaries beyond AI training, creating a complete integrated solution for both training and inference.
 
@@ -31,7 +36,9 @@ Large Language Models (LLMs) are reshaping industries at an unprecedented pace, 
 
 To overcome these challenges, Kthena was born. It is not intended to replace existing LLM serving frameworks (such as vLLM or SGLang), but rather to serve as an intelligent **traffic hub** and **scheduling center** above them, deeply integrated into Kubernetes.
 
-![Architecture](images/kthena-arch.svg)
+<div style={{ textAlign: 'center' }}>
+    <LightboxImage src={kthenaArchitecture} alt="Kthena Architecture" />
+</div>
 
 Kthena consists of two major components:
 
@@ -49,7 +56,9 @@ Kthena’s strength lies in its core capabilities specifically designed for LLM 
 
 ### 1) Production-Grade Inference Orchestration (ModelServing)
 
-![orchestration](images/model-serving.svg)
+<div style={{ textAlign: 'center' }}>
+    <LightboxImage src={kthenaOrchestration} alt="Kthena Model Serving Orchestration diagram" />
+</div>
 
 - **Three-layer LLM workload model**: `ModelServing -> ServingGroup -> Role`. A single API supports multiple deployment forms, including native LLM deployment, PD separation, and large-scale EP (Expert Parallelism).
 - **Prefill-Decode Separation Deployment**: Schedules compute-intensive Prefill instances onto nodes with high compute capability, and memory-bound Decode instances onto nodes with high-bandwidth memory, enabling better resource matching and lower end-to-end latency. Prefill and Decode can scale independently to adapt to mixed traffic patterns.
@@ -93,11 +102,11 @@ Based on the scheduling plugin architecture of Kthena Router, in scenarios with 
 - TTFT (Time to First Token) is reduced by approximately **73.5%**.
 - End-to-end latency is reduced by more than **60%**.
 
-| Plugin Configuration | Throughput (req/s) | TTFT (s) | End-to-End Latency (s) |
-| --- | ---:| ---:| ---:|
-| Least Request + KVCacheAware | **32.22** | **9.22** | **0.57** |
-| Least Request + Prefix Cache | 23.87 | 12.47 | 0.83 |
-| Random | 11.81 | 25.23 | 2.15 |
+| Plugin Configuration         | Throughput (req/s) | TTFT (s) | End-to-End Latency (s) |
+|------------------------------|-------------------:|---------:|-----------------------:|
+| Least Request + KVCacheAware |          **32.22** | **9.22** |               **0.57** |
+| Least Request + Prefix Cache |              23.87 |    12.47 |                   0.83 |
+| Random                       |              11.81 |    25.23 |                   2.15 |
 
 The gap in short-prompt scenarios converges with prompt length, but in multi-turn conversations, templated generation, and business scenarios with highly similar prefixes, KV Cache-aware routing delivers significant gains. Actual improvements depend on model size, prompt length, and hardware, but the “mix-and-match, scenario-based selection” approach has proven effective.
 
