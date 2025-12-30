@@ -74,6 +74,7 @@ func waitForModelServer(t *testing.T, namespace, name string) {
 			continue
 		}
 		found := false
+		var serverObj map[string]interface{}
 		for _, s := range servers {
 			server, ok := s.(map[string]interface{})
 			if !ok {
@@ -81,11 +82,18 @@ func waitForModelServer(t *testing.T, namespace, name string) {
 			}
 			if server["namespace"] == namespace && server["name"] == name {
 				found = true
+				serverObj = server
 				break
 			}
 		}
 		if found {
 			t.Logf("ModelServer %s/%s found in router store", namespace, name)
+			// Log associated pods if present
+			if pods, ok := serverObj["associatedPods"].([]interface{}); ok {
+				t.Logf("Associated pods: %v", pods)
+			} else {
+				t.Logf("No associated pods field or empty")
+			}
 			return
 		}
 		t.Logf("ModelServer %s/%s not yet present, retrying...", namespace, name)
