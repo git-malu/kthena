@@ -382,16 +382,18 @@ func createValidAutoscalingPolicyBinding(policyName string) *workload.Autoscalin
 			Namespace: testNamespace,
 		},
 		Spec: workload.AutoscalingPolicyBindingSpec{
-			PolicyRef: workload.PolicyRef{
+			PolicyRef: corev1.LocalObjectReference{
 				Name: policyName,
 			},
 			HomogeneousTarget: &workload.HomogeneousTarget{
 				Target: workload.Target{
-					TargetRef: workload.TargetRef{
+					TargetRef: corev1.ObjectReference{
 						Name: "some-model-serving",
 						Kind: workload.ModelServingKind.Kind,
 					},
 				},
+				MinReplicas: 1,
+				MaxReplicas: 10,
 			},
 		},
 	}
@@ -406,7 +408,7 @@ func createInvalidModelServing() *workload.ModelServing {
 		},
 		Spec: workload.ModelServingSpec{
 			Replicas: &negativeReplicas,
-			Template: workload.ModelServingTemplate{
+			Template: workload.ServingGroup{
 				Roles: []workload.Role{
 					{
 						Name:     "role1",
@@ -421,6 +423,7 @@ func createInvalidModelServing() *workload.ModelServing {
 								},
 							},
 						},
+						WorkerReplicas: 0,
 					},
 				},
 			},
