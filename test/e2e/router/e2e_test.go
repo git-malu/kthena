@@ -18,9 +18,12 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,6 +38,69 @@ var (
 	testCtx       *routercontext.RouterTestContext
 	testNamespace string
 )
+
+// waitForModelServer polls the router's debug endpoint until the specified ModelServer appears
+// in the store, or times out after 30 seconds.
+func waitForModelServer(t *testing.T, namespace, name string) {
+	t.Helper()
+	client := &http.Client{Timeout: 5 * time.Second}
+	url := "http://127.0.0.1:8080/debug/config_dump/modelservers"
+	deadline := time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline) {
+		resp, err := client.Get(url)
+		if err != nil {
+			t.Logf("Failed to query debug endpoint: %v", err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		if resp.StatusCode != http.StatusOK {
+			t.Logf("Debug endpoint returned %d", resp.StatusCode)
+			resp.Body.Close()
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		var data map[string]interface{}
+		if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+			t.Logf("Failed to decode response: %v", err)
+			resp.Body.Close()
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		resp.Body.Close()
+		servers, ok := data["modelservers"].([]interface{})
+		if !ok {
+			t.Logf("Unexpected response format, data: %v", data)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		found := false
+		var serverObj map[string]interface{}
+		for _, s := range servers {
+			server, ok := s.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if server["namespace"] == namespace && server["name"] == name {
+				found = true
+				serverObj = server
+				break
+			}
+		}
+		if found {
+			t.Logf("ModelServer %s/%s found in router store", namespace, name)
+			// Log associated pods if present
+			if pods, ok := serverObj["associatedPods"].([]interface{}); ok {
+				t.Logf("Associated pods: %v", pods)
+			} else {
+				t.Logf("No associated pods field or empty")
+			}
+			return
+		}
+		t.Logf("ModelServer %s/%s not yet present, retrying...", namespace, name)
+		time.Sleep(1 * time.Second)
+	}
+	t.Fatalf("Timed out waiting for ModelServer %s/%s to appear in router store", namespace, name)
+}
 
 // TestMain runs setup and cleanup for all tests in this package.
 func TestMain(m *testing.M) {
@@ -138,6 +204,10 @@ func TestModelRouteMultiModels(t *testing.T) {
 			t.Logf("Warning: Failed to delete ModelRoute %s/%s: %v", createdModelRoute.Namespace, createdModelRoute.Name, err)
 		}
 	})
+
+	// Wait for both ModelServers to be present in the router's store before running tests
+	waitForModelServer(t, testNamespace, "deepseek-r1-7b")
+	waitForModelServer(t, testNamespace, "deepseek-r1-1-5b")
 
 	messages := []utils.ChatMessage{
 		utils.NewChatMessage("user", "Hello"),
