@@ -142,6 +142,8 @@ type Store interface {
 
 	// Refresh Store and ModelServer when add a new pod or update a pod
 	AddOrUpdatePod(pod *corev1.Pod, modelServer []*aiv1alpha1.ModelServer) error
+	// AppendModelServerToPod appends new modelservers to the podInfo without replacing existing ones
+	AppendModelServerToPod(pod *corev1.Pod, modelServers []*aiv1alpha1.ModelServer) error
 	// Refresh Store and ModelServer when delete a pod
 	DeletePod(podName types.NamespacedName) error
 
@@ -525,6 +527,7 @@ func (s *store) AddOrUpdatePod(pod *corev1.Pod, modelServers []*aiv1alpha1.Model
 			ms := value.(*modelServer)
 			ms.addPod(podName)
 			// Categorize the pod for PDGroup scheduling
+			klog.V(4).Infof("Categorizing pod %s for PDGroup scheduling, model server %s", podName, modelServerName)
 			ms.categorizePodForPDGroup(podName, pod.Labels)
 		}
 	}
@@ -549,6 +552,43 @@ func (s *store) AddOrUpdatePod(pod *corev1.Pod, modelServers []*aiv1alpha1.Model
 	if oldPodInfo == nil {
 		s.updatePodMetrics(newPodInfo)
 		s.updatePodModels(newPodInfo)
+	}
+
+	return nil
+}
+
+func (s *store) AppendModelServerToPod(pod *corev1.Pod, modelServers []*aiv1alpha1.ModelServer) error {
+	podName := utils.GetNamespaceName(pod)
+
+	// Get existing podInfo, return error if pod doesn't exist
+	value, ok := s.pods.Load(podName)
+	if !ok {
+		return fmt.Errorf("pod %s not found in store, cannot append modelserver", podName)
+	}
+
+	podInfo := value.(*PodInfo)
+
+	// Append new modelservers only
+	for _, ms := range modelServers {
+		modelServerName := utils.GetNamespaceName(ms)
+
+		// Only add if not already present
+		if !podInfo.HasModelServer(modelServerName) {
+			podInfo.AddModelServer(modelServerName)
+			// NOTE: even if a pod belongs to multiple model servers, the backend should be the same
+			if podInfo.engine == "" {
+				podInfo.engine = string(ms.Spec.InferenceEngine)
+			}
+
+			// Update modelServer object to include this pod
+			if value, ok := s.modelServer.Load(modelServerName); ok {
+				msObj := value.(*modelServer)
+				msObj.addPod(podName)
+				// Categorize the pod for PDGroup scheduling
+				klog.V(4).Infof("Categorizing pod %s for PDGroup scheduling, model server %s", podName, modelServerName)
+				msObj.categorizePodForPDGroup(podName, pod.Labels)
+			}
+		}
 	}
 
 	return nil
